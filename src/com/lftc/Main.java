@@ -136,7 +136,7 @@ public class Main {
                                 state = 31;
                                 break;
                             }
-                            if (c == ' '){
+                            if (c == ' ' || c == '\t'){
                                 break;
                             }
                             if (c == '\0'){
@@ -157,6 +157,34 @@ public class Main {
                             }
                             if(c == '\\'){
                                 state = 56;
+                                break;
+                            }
+                            if(c == '&'){
+                                state = 34;
+                                break;
+                            }
+                            if(c == '|'){
+                                state = 36;
+                                break;
+                            }
+                            if(c == '!'){
+                                state = 38;
+                                break;
+                            }
+                            if(c == '/'){
+                                state = 51;
+                                break;
+                            }
+                            if(c == '<'){
+                                state = 44;
+                                break;
+                            }
+                            if(c == '='){
+                                state = 39;
+                                break;
+                            }
+                            if(c == '>'){
+                                state = 47;
                                 break;
                             }
 
@@ -423,9 +451,329 @@ public class Main {
                             word = new String();
                             break;
 
+                        case 17:
+                            switch(c){
+                                case 'a': word += '\007'; state = 15; break;
+                                case 'b': word += '\b'; state = 15; break;
+                                case 'f': word += '\f'; state = 15;break;
+                                case 'n': word += '\n'; state = 15; break;
+                                case 't': word += '\t'; state = 15; break;
+                                //case 'v': word += "\v"; state = 15; break;
+                                case '\\': word += '\\'; state = 15; break;
+                                case '\'': word += '\''; state = 15; break;
+                                case '\"': word += '\"'; state = 15; break;
+                                case '?': word += '?'; state = 15; break;
+                                case '\0': word += '\0'; state = 15; break;
+                                default:
+                                    System.out.println("Illegal escape character: \\" + c);
+                                    System.out.println("Line: " + line);
+                                    i = text.length();
+                                    break;
+                            }
                         default:
                             System.out.println("Error on line: " + line);
                             i = text.length();
+                            break;
+
+                        case 18:
+                            if(c == '\"'){
+                                state = 19;
+                                break;
+                            }
+                            if(c == '\\'){
+                                state = 20;
+                                break;
+                            }
+                            else{
+                                word += c;
+                                break;
+                            }
+
+                        case 19:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("CT_STRING"), word, line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 20:
+                            switch(c){
+                                case 'a': word += '\007'; state = 18; break;
+                                case 'b': word += '\b'; state = 18; break;
+                                case 'f': word += '\f'; state = 18;break;
+                                case 'n': word += '\n'; state = 18; break;
+                                case 't': word += '\t'; state = 18; break;
+                                //case 'v': word += "\v"; state = 15; break;
+                                case '\\': word += '\\'; state = 18; break;
+                                case '\'': word += '\''; state = 18; break;
+                                case '\"': word += '\"'; state = 18; break;
+                                case '?': word += '?'; state = 18; break;
+                                case '\0': word += '\0'; state = 18; break;
+                                default:
+                                    System.out.println("Illegal escape character: \\" + c);
+                                    System.out.println("Line: " + line);
+                                    i = text.length();
+                                    break;
+                            }
+
+                        case 21:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("COMMA"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 22:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("SEMICOLON"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 23:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("LPAR"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 24:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("RPAR"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 25:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("LBRACKET"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 26:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("RBRACKET"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 27:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("LACC"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 28:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("RACC"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 29:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("ADD"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 30:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("SUB"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 31:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("MUL"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 32:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("DIV"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 33:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("DOT"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 34:
+                            if(c == '&'){
+                                state = 35;
+                                break;
+                            }
+                            else{
+                                System.out.println("Expected & on line: " + line);
+                                i = text.length();
+                                break;
+                            }
+
+                        case 35:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("AND"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 36:
+                            if(c == '|'){
+                                state = 37;
+                                break;
+                            }
+                            else{
+                                System.out.println("Expected | on line: " + line);
+                                i = text.length();
+                                break;
+                            }
+
+                        case 37:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("OR"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 38:
+                            if(c == '='){
+                                state = 42;
+                                break;
+                            }
+                            else{
+                                state = 43;
+                                break;
+                            }
+
+                        case 39:
+                            if(c == '='){
+                                state = 40;
+                                break;
+                            }
+                            else{
+                                state = 41;
+                                break;
+                            }
+
+                        case 40:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("EQUAL"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 41:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("ASSIGN"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 42:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("NOTEQ"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 43:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("NOT"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 44:
+                            if(c == '='){
+                                state = 45;
+                                break;
+                            }
+                            else{
+                                state = 46;
+                                break;
+                            }
+
+                        case 45:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("LESSEQ"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 46:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("LESS"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 47:
+                            if(c == '='){
+                                state = 48;
+                                break;
+                            }
+                            else{
+                                state = 49;
+                                break;
+                            }
+
+                        case 48:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("GREATEREQ"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 49:
+                            i--;
+                            tokenList.add(new Token(Token.tokens.indexOf("GREATER"), line));
+                            state = 0;
+                            word = new String();
+                            break;
+
+                        case 51:
+                            if(c == '/'){
+                                state = 52;
+                                break;
+                            }
+                            if(c == '*'){
+                                state = 54;
+                                break;
+                            }
+                            else{
+                                state = 32;
+                                break;
+                            }
+
+                        case 52:
+                            if(c == '\n' || c == '\0')
+                                state = 0;
+
+                            break;
+
+
+                        case 54:
+                            if(c == '*')
+                                state = 55;
+
+                            break;
+
+                        case 55:
+                            if(c == '/'){
+                                state = 0;
+                                break;
+                            }
+                            if(!(c == '*'))
+                                state = 54;
+                            break;
                     }
             }
 
