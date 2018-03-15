@@ -49,12 +49,17 @@ public class Token {
         String str = "";
         str += tokens.get(code);
         if(content != "") {
-            if(format > 0) {
-                int intContent = this.convert(format, content);
+            if(format == 1 || format == 2 || format == 3) {
+                int intContent = convertInt(format, content);
                 str = str + ":" + intContent;
             }
             else{
-                str = str + ":" + content;
+                if(format == 5 || format == 6) {
+                    float floatContent = convertFloat(format, content);
+                    str = str + ":" + floatContent;
+                }
+                else
+                    str = str + ":" + content;
             }
         }
 
@@ -62,8 +67,24 @@ public class Token {
         return str;
     }
 
-    private int convert(int format, String s){
-        //TODO convert using the formats list
+    private int convertInt(int format, String s){
+        if(format == 1){
+            return Integer.parseInt(s);
+        }
 
+        if(format == 2){
+            return Integer.parseInt(s, 8);
+        }
+
+        else
+            return Integer.parseInt(s.substring(2), 16);
     }
+
+    private float convertFloat(int format, String s){
+        if(format == 4){
+            return Float.parseFloat(s);
+        }
+        else
+            return Float.parseFloat(s);
+        }
 }
