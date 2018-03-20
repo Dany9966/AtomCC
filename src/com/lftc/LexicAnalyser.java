@@ -14,7 +14,7 @@ public class LexicAnalyser {
         this.line = 1;
     }
 
-    public void analiseFile(byte[] bFile){
+    public LinkedList<Token> analiseFile(byte[] bFile){
             String text = new String(bFile);
             //text = text.concat(Character.toString('\0'));
             text += '\0';
@@ -187,7 +187,8 @@ public class LexicAnalyser {
 
                             }
                         case 2:
-                            if (Token.tokens.subList(1, 11).contains(word.toUpperCase())) {
+                            //System.out.println("Word: " + Token.tokens.subList(2, 13));
+                            if (Token.tokens.subList(2, 13).contains(word.toUpperCase())) {
                                 // System.out.println("keyword");
                                 int auxCode = Token.tokens.indexOf(word.toUpperCase());
                                 tokenList.add(new Token(auxCode, line));
@@ -831,15 +832,16 @@ public class LexicAnalyser {
                 }
             }
 
+            //printToken.tokens();
             if(err == 0) {
-                //printToken.tokens();
+
                 tokenList.forEach(t -> System.out.print(t.toString()));
             }
 
 
 
 
-
+        return tokenList;
     }
 }
 
