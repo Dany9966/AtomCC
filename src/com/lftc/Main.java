@@ -13,7 +13,10 @@ public class Main {
             Path path = f.toPath();
             byte[] bFile = Files.readAllBytes(path);
             LexicAnalyser al = new LexicAnalyser();
-            al.analiseFile(bFile);
+            SyntaxAnalyser sa = new SyntaxAnalyser(al.analiseFile(bFile));
+            sa.consume(Token.tokens.indexOf("VOID"));
+
+
 
     }catch (FileNotFoundException e) {
         e.printStackTrace();

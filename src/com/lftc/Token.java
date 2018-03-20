@@ -86,5 +86,9 @@ public class Token {
         }
         else
             return Float.parseFloat(s);
-        }
+    }
+
+    public int getCode(){
+        return code;
+    }
 }
