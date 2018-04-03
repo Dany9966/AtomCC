@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Token {
-    private int code;
-    private String content;
+    private int code;   //codul atomului
+    private String content;     //continutul atomului
     private int line;
     private int format;
     public static ArrayList<String> tokens = new ArrayList<String>(Arrays.asList(
@@ -19,6 +19,10 @@ public class Token {
     public static ArrayList<String> formats = new ArrayList<String>(Arrays.asList(
             "STRING", "DECIMAL", "OCTAL", "HEXADECIMAL", "FLOATPOINT", "EXPONENTIAL"
     ));
+
+    public static int codeOf(String s){
+        return Token.tokens.indexOf(s);
+    }
 
     public Token(int code, int line){
         this.code = code;

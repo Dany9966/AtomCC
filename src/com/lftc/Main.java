@@ -14,7 +14,8 @@ public class Main {
             byte[] bFile = Files.readAllBytes(path);
             LexicAnalyser al = new LexicAnalyser();
             SyntaxAnalyser sa = new SyntaxAnalyser(al.analiseFile(bFile));
-            sa.consume(Token.tokens.indexOf("VOID"));
+            //sa.consume(Token.tokens.indexOf("VOID"));
+            sa.analyse();
 
 
 
