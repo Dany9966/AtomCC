@@ -1,7 +1,5 @@
 package com.lftc;
-
-//
-//TODO recursivitate method repairs (init and all)
+//TODO plz debug this fast
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -18,6 +16,7 @@ public class SyntaxAnalyser {
 
     public void tkErr(Token t, String s){
         System.out.println(s + " Error on line: " + t.getLine());
+        System.exit(1);
     }
 
     public void analyse(){
@@ -55,12 +54,19 @@ public class SyntaxAnalyser {
                             }
                             continue;
                         }
-                        else return false;
+                        else {
+                            tkErr(crtTk, "Missing ID after COMMA");
+                            break;
+                        }
                     }
                     break;
                 }
                 if(consume(Token.codeOf("SEMICOLON")))
                     return true;
+                else tkErr(crtTk, "Missing SEMICOLON");
+            }
+            else{
+                tkErr(crtTk, "Missing ID");
             }
         }
         crtTk = init;
@@ -76,6 +82,7 @@ public class SyntaxAnalyser {
             }
             if(consume(Token.codeOf("RBRACKET")))
                 return true;
+            else tkErr(crtTk, "Missing RBRACKET");
         }
         crtTk = init;
         return false;
@@ -94,7 +101,11 @@ public class SyntaxAnalyser {
                 if(exprAssign())
                     return true;
             }
+            /*else{
+                tkErr(crtTk, "Missing ASSIGN token");
+            }*/
         }
+
         crtTk = init;
         return exprOr();
     }
@@ -138,6 +149,10 @@ public class SyntaxAnalyser {
             if(exprEq()){
                 if(exprAnd1()){}
             }
+            else {
+                tkErr(crtTk, "Missing AND element");
+                return false;
+            }
         }
 
         return true;
@@ -161,6 +176,10 @@ public class SyntaxAnalyser {
                 if(exprEq1()){
                     return true;
                 }
+            }
+            else {
+                tkErr(crtTk, "Missing relation");
+                return false;
             }
         }
         crtTk = init;
@@ -188,6 +207,7 @@ public class SyntaxAnalyser {
                 }
             }else{
                 tkErr(crtTk, "Missing relation");
+                return false;
             }
         }
         crtTk = init;
@@ -198,10 +218,103 @@ public class SyntaxAnalyser {
     private boolean exprAdd() {
         System.out.println("exprAdd " + crtTk);
         Token init = crtTk;
-        //if()
-        //TODO exprAdd from notebook
+
+        if(exprMul()){
+            return exprAdd1();
+        }
+        crtTk = init;
         return false;
     }
+
+    private boolean exprMul() {
+        System.out.println("exprMul " + crtTk);
+        Token init = crtTk;
+        if(exprCast()){
+            return exprMul1();
+        }
+
+        crtTk = init;
+        return false;
+    }
+
+    private boolean exprMul1() {
+        System.out.println("exprMul1 " + crtTk);
+        Token init = crtTk;
+        if(consume(Token.codeOf("MUL")) || consume(Token.codeOf("DIV"))){
+            if(exprCast()){
+                if(exprMul1()){
+                    return true;
+                }
+            }else{
+                tkErr(crtTk, "Missing cast expr");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean exprCast() {
+        System.out.println("exprCast " + crtTk);
+        Token init = crtTk;
+
+        if(consume(Token.codeOf("LPAR"))){
+            if(typeName()){
+                if(consume(Token.codeOf("RPAR"))){
+                    if(exprCast()){
+                        return true;
+                    }
+                }
+                else{
+                    tkErr(crtTk, "Missing RPAR");
+                }
+            }
+            else{
+                tkErr(crtTk, "Missing cast type after LPAR");
+            }
+        }
+        else{
+            if(exprUnary())
+                return true;
+        }
+
+        crtTk = init;
+        return false;
+    }
+
+    private boolean typeName() {
+        System.out.println("typeName " + crtTk);
+        Token init = crtTk;
+
+        if(typeBase()){
+            if(arrayDecl()){
+
+            }
+            return true;
+        }
+
+        crtTk = init;
+        return false;
+    }
+
+    private boolean exprAdd1() {
+        System.out.println("exprAdd1 " + crtTk);
+        Token init = crtTk;
+
+        if(consume(Token.codeOf("ADD")) || consume(Token.codeOf("SUB"))){
+            if(exprMul()){
+                if(exprAdd1()){
+                    return true;
+                }
+            }
+            else{
+                tkErr(crtTk, "Missing mul expression");
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     private boolean exprUnary() {
         System.out.println("exprUnary " + crtTk);
@@ -212,19 +325,133 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprPostfix() {
-        //TODO recursivitate stanga
+        System.out.println("exprPostfix " + crtTk);
+        Token init = crtTk;
 
+        if(exprPrimary()){
+            return exprPostfix1();
+        }
+
+        crtTk = init;
         return false;
     }
 
+    private boolean exprPrimary() {
+        System.out.println("exprPrimary " + crtTk);
+        Token init = crtTk;
+
+        if(consume(Token.codeOf("ID"))){
+            if(consume(Token.codeOf("LPAR"))){
+                if(expr()){
+                    while(true){
+                        if(consume(Token.codeOf("COMMA"))){
+                            if(expr()){
+                                continue;
+                            }
+                            else{
+                                tkErr(crtTk, "Missing expression after COMMA");
+                                return false;
+                            }
+
+                        }
+                        else{
+                            break;
+                        }
+                    }
+                }
+                if(consume(Token.codeOf("RPAR"))){
+
+                }
+                else{
+                    tkErr(crtTk, "Missing RPAR");
+                    crtTk = init;
+                    return false;
+                }
+            }
+
+
+
+            return true;
+        }
+        else if(consume(Token.codeOf("CT_INT")))
+            return true;
+
+        else if(consume(Token.codeOf("CT_REAL")))
+            return true;
+
+        else if(consume(Token.codeOf("CT_CHAR")))
+            return true;
+
+        else if(consume(Token.codeOf("CT_STRING")))
+            return true;
+
+        else if(consume(Token.codeOf("LPAR"))){
+            if(expr()){
+                if(consume(Token.codeOf("RPAR")))
+                    return true;
+            }
+        }
+
+        crtTk = init;
+        return false;
+    }
+
+    private boolean exprPostfix1() {
+        System.out.println("exprPostfix1 " + crtTk);
+        Token init = crtTk;
+
+        if(consume(Token.codeOf("LBRACKET"))){
+            if(expr()){
+                if(consume(Token.codeOf("RBRACKET"))){
+                    if(exprPostfix1()){
+                        return true;
+                    }
+                }
+                else{
+                    tkErr(crtTk, "Missing RBRACKET");
+                    return false;
+                }
+            }
+            else{
+                tkErr(crtTk, "Missing expression after LBRACKET");
+                return false;
+            }
+        }
+        else{
+            if(consume(Token.codeOf("DOT"))){
+                if(consume(Token.codeOf("ID"))){
+                    if(exprPostfix1()){
+                        return true;
+                    }
+                }
+                else{
+                    tkErr(crtTk, "Missing ID after DOT");
+                    return false;
+                }
+            }
+        }
+
+        //crtTk = init;
+        return true;
+    }
+
+
     private boolean typeBase() {
         System.out.println("typeBase " + crtTk);
+        Token init = crtTk;
 
-        if(consume(Token.codeOf("INT")) || consume(Token.codeOf("DOUBLE")) || consume(Token.codeOf("CHAR"))
-                || consume(Token.codeOf("STRUCT"))){
+        if(consume(Token.codeOf("INT")) || consume(Token.codeOf("DOUBLE")) || consume(Token.codeOf("CHAR"))) {
+            return true;
+        }
+        else if(consume(Token.codeOf("STRUCT"))){
             if(consume(Token.codeOf("ID")))
                 return true;
+            else{
+                tkErr(crtTk, "Missing ID");
+            }
         }
+
+        crtTk = init;
         return false;
     }
 
@@ -256,6 +483,7 @@ public class SyntaxAnalyser {
                             if(funcArg()){
                                 continue;
                             }
+                            tkErr(crtTk, "Missing argument after COMMA");
                             return false;
                         }
                         break;
@@ -264,7 +492,16 @@ public class SyntaxAnalyser {
                 if(consume(Token.codeOf("RPAR"))){
                     if(stmCompound())
                         return true;
+                    else{
+                        tkErr(crtTk, "Missing function definition");
+                    }
                 }
+                else{
+                    tkErr(crtTk, "Missing RPAR");
+                }
+            }
+            else{
+                tkErr(crtTk, "Missing LPAR after function ID");
             }
         }
         crtTk = init;
@@ -282,6 +519,9 @@ public class SyntaxAnalyser {
             }
             if(consume(Token.codeOf("RACC")))
                 return true;
+            else{
+                tkErr(crtTk, "Missing RACC");
+            }
         }
         crtTk = init;
         return false;
@@ -405,6 +645,9 @@ public class SyntaxAnalyser {
                 }
                 return true;
             }
+            else{
+                tkErr(crtTk, "Missing ID");
+            }
         }
         crtTk = init;
         return false;
@@ -422,8 +665,17 @@ public class SyntaxAnalyser {
                     if(consume(Token.tokens.indexOf("RACC"))){
                         if(consume(Token.tokens.indexOf("SEMICOLON")))
                             return true;
+                        else tkErr(crtTk, "Missing SEMICOLON");
                     }
+                    else{
+                        tkErr(crtTk, "Missing RACC");
+                    }
+                }else{
+                    tkErr(crtTk, "Missing struct definition");
                 }
+            }
+            else{
+                tkErr(crtTk, "Missing STRUCT ID");
             }
         }
         crtTk = init;
@@ -434,7 +686,7 @@ public class SyntaxAnalyser {
         if(crtTk.getCode() ==  code){
             consumed = crtTk;
             crtTk = tokenIterator.next();
-            //System.out.println("consumed: " + consumed);
+            System.out.println("consumed: " + consumed);
             return true;
         }
         return false;
