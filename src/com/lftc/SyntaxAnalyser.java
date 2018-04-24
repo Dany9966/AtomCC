@@ -101,9 +101,9 @@ public class SyntaxAnalyser {
                 if(exprAssign())
                     return true;
             }
-            /*else{
-                tkErr(crtTk, "Missing ASSIGN token");
-            }*/
+            else{
+                tokenIterator.previous();
+            }
         }
 
         crtTk = init;
@@ -685,7 +685,9 @@ public class SyntaxAnalyser {
     public boolean consume(int code){
         if(crtTk.getCode() ==  code){
             consumed = crtTk;
-            crtTk = tokenIterator.next();
+            if(tokenIterator.hasNext()) {
+                crtTk = tokenIterator.next();
+            }
             System.out.println("consumed: " + consumed);
             return true;
         }
