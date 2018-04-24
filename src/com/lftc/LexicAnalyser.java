@@ -1,20 +1,20 @@
 package com.lftc;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class LexicAnalyser {
 
-        private LinkedList<Token> tokenList;
+        private ArrayList<Token> tokenList;
         private int state;
         private int line;
 
     public LexicAnalyser() {
-        this.tokenList = new LinkedList<>();
+        this.tokenList = new ArrayList<>();
         this.state = 0;
         this.line = 1;
     }
 
-    public LinkedList<Token> analiseFile(byte[] bFile){
+    public ArrayList<Token> analiseFile(byte[] bFile){
             String text = new String(bFile);
             //text = text.concat(Character.toString('\0'));
             text += '\0';
@@ -135,7 +135,7 @@ public class LexicAnalyser {
                                 state = 22;
                                 break;
                             }
-                            if (c == '.') {
+                            if (c == ',') {
                                 state = 21;
                                 break;
                             }
@@ -798,6 +798,7 @@ public class LexicAnalyser {
                                 break;
                             } else {
                                 state = 32;
+                                i--;
                                 break;
                             }
 
