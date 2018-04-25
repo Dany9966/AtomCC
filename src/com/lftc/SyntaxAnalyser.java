@@ -167,7 +167,7 @@ public class SyntaxAnalyser {
 
     private boolean exprEq1() {
         System.out.println("exprEq1 " + crtTkIndex);
-        int init = crtTkIndex;
+        //int init = crtTkIndex;
         if(consume(Token.codeOf("EQUAL")) || consume(Token.codeOf("NOTEQ"))){
             if(exprRel()){
                 if(exprEq1()){
@@ -179,7 +179,7 @@ public class SyntaxAnalyser {
                 return false;
             }
         }
-        crtTkIndex = init;
+        // crtTkIndex = init;
         return true;
     }
 
@@ -195,7 +195,7 @@ public class SyntaxAnalyser {
 
     private boolean exprRel1() {
         System.out.println("exprRel1 " + crtTkIndex);
-        int init = crtTkIndex;
+        //int init = crtTkIndex;
         if(consume(Token.codeOf("LESS")) || consume(Token.codeOf("LESSEQ")) ||
                 consume(Token.codeOf("GREATER")) || consume(Token.codeOf("GREATEREQ"))){
             if(exprAdd()){
@@ -207,7 +207,7 @@ public class SyntaxAnalyser {
                 return false;
             }
         }
-        crtTkIndex = init;
+        //crtTkIndex = init;
 
         return true;
     }
@@ -236,7 +236,7 @@ public class SyntaxAnalyser {
 
     private boolean exprMul1() {
         System.out.println("exprMul1 " + crtTkIndex);
-        int init = crtTkIndex;
+        //int init = crtTkIndex;
         if(consume(Token.codeOf("MUL")) || consume(Token.codeOf("DIV"))){
             if(exprCast()){
                 if(exprMul1()){
@@ -296,7 +296,7 @@ public class SyntaxAnalyser {
 
     private boolean exprAdd1() {
         System.out.println("exprAdd1 " + crtTkIndex);
-        int init = crtTkIndex;
+        //int init = crtTkIndex;
 
         if(consume(Token.codeOf("ADD")) || consume(Token.codeOf("SUB"))){
             if(exprMul()){
@@ -395,7 +395,7 @@ public class SyntaxAnalyser {
 
     private boolean exprPostfix1() {
         System.out.println("exprPostfix1 " + crtTkIndex);
-        int init = crtTkIndex;
+        //int init = crtTkIndex;
 
         if(consume(Token.codeOf("LBRACKET"))){
             if(expr()){
@@ -458,11 +458,16 @@ public class SyntaxAnalyser {
 
         if(typeBase()){
             if(consume(Token.codeOf("MUL"))){
-                return declFuncCommon();
+
             }
+
         }
         else if(consume(Token.codeOf("VOID"))){
-            return declFuncCommon();
+
+        }
+
+        if(declFuncCommon()){
+            return true;
         }
 
         crtTkIndex = init;
@@ -497,9 +502,7 @@ public class SyntaxAnalyser {
                     tkErr(crtTkIndex, "Missing RPAR");
                 }
             }
-            else{
-                tkErr(crtTkIndex, "Missing LPAR after function ID");
-            }
+
         }
         crtTkIndex = init;
         return false;

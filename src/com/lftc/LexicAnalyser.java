@@ -710,6 +710,7 @@ public class LexicAnalyser {
                                 state = 40;
                                 break;
                             } else {
+                                i--;
                                 state = 41;
                                 break;
                             }
@@ -747,6 +748,7 @@ public class LexicAnalyser {
                                 state = 45;
                                 break;
                             } else {
+                                i--;
                                 state = 46;
                                 break;
                             }
