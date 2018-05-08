@@ -2,7 +2,6 @@ package com.lftc;
 //TODO plz debug this fast
 import java.util.ArrayList;
 import java.util.ListIterator;
-
 public class SyntaxAnalyser {
     private ArrayList<Token> tokensToAnalyse;
     private Token consumed;
@@ -39,7 +38,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean declVar() {
-        System.out.println("declVar " + crtTkIndex);
+        System.out.println("declVar " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(typeBase()){
             if(consume(Token.codeOf("ID"))){
@@ -74,7 +73,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean arrayDecl() {
-        System.out.println("arrayDecl " + crtTkIndex);
+        System.out.println("arrayDecl " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(consume(Token.codeOf("LBRACKET"))){
             if(expr()){
@@ -89,12 +88,12 @@ public class SyntaxAnalyser {
     }
 
     private boolean expr() {
-        System.out.println("expr " + crtTkIndex);
+        System.out.println("expr " + tokensToAnalyse.get(crtTkIndex));
         return exprAssign();
     }
 
     private boolean exprAssign() {
-        System.out.println("exprAssign " + crtTkIndex);
+        System.out.println("exprAssign " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprUnary()){
             if(consume(Token.codeOf("ASSIGN"))){
@@ -108,7 +107,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprOr() {
-        System.out.println("exprOr " + crtTkIndex);
+        System.out.println("exprOr " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprAnd()){
             return exprOr1();
@@ -119,7 +118,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprOr1() {
-        System.out.println("exprOr1 " + crtTkIndex);
+        System.out.println("exprOr1 " + tokensToAnalyse.get(crtTkIndex));
         if(consume(Token.codeOf("OR"))){
             if(exprAnd()){
                 if(exprOr1()){}
@@ -131,7 +130,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprAnd(){
-        System.out.println("exprAnd " + crtTkIndex);
+        System.out.println("exprAnd " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprEq()){
             return exprAnd1();
@@ -141,7 +140,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprAnd1() {
-        System.out.println("exprAnd1 " + crtTkIndex);
+        System.out.println("exprAnd1 " + tokensToAnalyse.get(crtTkIndex));
         if(consume(Token.codeOf("AND"))){
             if(exprEq()){
                 if(exprAnd1()){}
@@ -156,7 +155,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprEq() {
-        System.out.println("exprEq " + crtTkIndex);
+        System.out.println("exprEq " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprRel()){
             return exprEq1();
@@ -166,7 +165,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprEq1() {
-        System.out.println("exprEq1 " + crtTkIndex);
+        System.out.println("exprEq1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("EQUAL")) || consume(Token.codeOf("NOTEQ"))){
             if(exprRel()){
@@ -184,7 +183,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprRel() {
-        System.out.println("exprRel " + crtTkIndex);
+        System.out.println("exprRel " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprAdd()){
             return exprRel1();
@@ -194,7 +193,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprRel1() {
-        System.out.println("exprRel1 " + crtTkIndex);
+        System.out.println("exprRel1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("LESS")) || consume(Token.codeOf("LESSEQ")) ||
                 consume(Token.codeOf("GREATER")) || consume(Token.codeOf("GREATEREQ"))){
@@ -213,7 +212,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprAdd() {
-        System.out.println("exprAdd " + crtTkIndex);
+        System.out.println("exprAdd " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(exprMul()){
@@ -224,7 +223,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprMul() {
-        System.out.println("exprMul " + crtTkIndex);
+        System.out.println("exprMul " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(exprCast()){
             return exprMul1();
@@ -235,7 +234,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprMul1() {
-        System.out.println("exprMul1 " + crtTkIndex);
+        System.out.println("exprMul1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("MUL")) || consume(Token.codeOf("DIV"))){
             if(exprCast()){
@@ -252,7 +251,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprCast() {
-        System.out.println("exprCast " + crtTkIndex);
+        System.out.println("exprCast " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(consume(Token.codeOf("LPAR"))){
@@ -280,7 +279,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean typeName() {
-        System.out.println("typeName " + crtTkIndex);
+        System.out.println("typeName " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(typeBase()){
@@ -295,7 +294,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprAdd1() {
-        System.out.println("exprAdd1 " + crtTkIndex);
+        System.out.println("exprAdd1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
 
         if(consume(Token.codeOf("ADD")) || consume(Token.codeOf("SUB"))){
@@ -314,7 +313,7 @@ public class SyntaxAnalyser {
 
 
     private boolean exprUnary() {
-        System.out.println("exprUnary " + crtTkIndex);
+        System.out.println("exprUnary " + tokensToAnalyse.get(crtTkIndex));
         if(consume(Token.codeOf("SUB")) || consume(Token.codeOf("NOT"))){
             return exprUnary();
         }
@@ -322,7 +321,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprPostfix() {
-        System.out.println("exprPostfix " + crtTkIndex);
+        System.out.println("exprPostfix " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(exprPrimary()){
@@ -334,7 +333,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprPrimary() {
-        System.out.println("exprPrimary " + crtTkIndex);
+        System.out.println("exprPrimary " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(consume(Token.codeOf("ID"))){
@@ -394,7 +393,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean exprPostfix1() {
-        System.out.println("exprPostfix1 " + crtTkIndex);
+        System.out.println("exprPostfix1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
 
         if(consume(Token.codeOf("LBRACKET"))){
@@ -434,7 +433,7 @@ public class SyntaxAnalyser {
 
 
     private boolean typeBase() {
-        System.out.println("typeBase " + crtTkIndex);
+        System.out.println("typeBase " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(consume(Token.codeOf("INT")) || consume(Token.codeOf("DOUBLE")) || consume(Token.codeOf("CHAR"))) {
@@ -453,7 +452,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean declFunc() {
-        System.out.println("declFunc " + crtTkIndex);
+        System.out.println("declFunc " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(typeBase()){
@@ -475,7 +474,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean declFuncCommon() {
-        System.out.println("declFuncCommon " + crtTkIndex);
+        System.out.println("declFuncCommon " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(consume(Token.codeOf("ID"))){
             if(consume(Token.codeOf("LPAR"))){
@@ -509,7 +508,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean stmCompound() {
-        System.out.println("stmCompound " + crtTkIndex);
+        System.out.println("stmCompound " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(consume(Token.codeOf("LACC"))){
             while(true){
@@ -528,7 +527,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean stm() {
-        System.out.println("stm " + crtTkIndex);
+        System.out.println("stm " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(stmCompound())
             return true;
@@ -636,7 +635,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean funcArg() {
-        System.out.println("funcArg " + crtTkIndex);
+        System.out.println("funcArg " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(typeBase()){
             if(consume(Token.codeOf("ID"))){
@@ -654,7 +653,7 @@ public class SyntaxAnalyser {
     }
 
     private boolean declStruct() {
-        System.out.println("declStruct " + crtTkIndex);
+        System.out.println("declStruct " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
         if(consume(Token.tokens.indexOf("STRUCT"))){
             if(consume(Token.tokens.indexOf("ID"))){
