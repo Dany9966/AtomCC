@@ -303,7 +303,6 @@ public class LexicAnalyser {
                                 break;
 
                             } else {
-                                //TODO check if alpha is a-f A-F
                                 word += c;
                                 System.out.println("Expected alphanum: " + word);
                                 System.out.println("Line: " + line);
@@ -314,7 +313,6 @@ public class LexicAnalyser {
 
                         case 6:
                             if (Character.isLetterOrDigit(c)) {
-                                //TODO check if alpha is a-f A-F
                                 word += c;
                                 break;
                             } else {

@@ -8,6 +8,7 @@ public class Token {
     private String content;     //continutul atomului
     private int line;
     private int format;
+    private String name;
     public static ArrayList<String> tokens = new ArrayList<String>(Arrays.asList(
             "ID", "END", "BREAK", "CHAR", "DOUBLE", "ELSE", "FOR", "IF", "INT", "RETURN", "STRUCT", "VOID", "WHILE",
             "CT_INT", "CT_REAL", "CT_CHAR", "CT_STRING", "COMMA", "SEMICOLON", "LPAR", "RPAR", "LBRACKET",
@@ -45,6 +46,7 @@ public class Token {
         this.line = line;
         this.format = format;
     }
+
     public int getLine(){
         return this.line;
     }
@@ -52,7 +54,7 @@ public class Token {
     public String toString() {
         String str = "";
         str += tokens.get(code);
-        if(content != "") {
+        if(!(content.equals(""))) {
             if(format == 1 || format == 2 || format == 3) {
                 int intContent = convertInt(format, content);
                 str = str + ":" + intContent;
@@ -94,5 +96,9 @@ public class Token {
 
     public int getCode(){
         return code;
+    }
+
+    public String getContent() {
+        return content;
     }
 }
