@@ -2,6 +2,7 @@ package com.lftc;
 
 import java.util.ArrayList;
 import java.util.ListIterator;
+import java.util.Map;
 
 public class SyntaxAnalyser {
     private ArrayList<Token> tokensToAnalyse;
@@ -13,6 +14,8 @@ public class SyntaxAnalyser {
     private Symbol crtFunc;
     private Symbol crtStruct;
     private Symbol foundSymbol;
+    private static Map<String,Integer> typeMap = Map.of("TB_CHAR", 1, "TB_INT", 2, "TB_DOUBLE", 3);
+
 
     public SyntaxAnalyser(ArrayList<Token> tokensToAnalyse){
         this.tokensToAnalyse = tokensToAnalyse;
@@ -89,11 +92,11 @@ public class SyntaxAnalyser {
     private boolean declVar() {
         System.out.println("declVar " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        SymType t;
-        if((t = typeBase()) != null){
+        SymType t = typeBase();
+        if(t != null){
             if(consume(Token.codeOf("ID"))){
                 String tkName = consumed.getContent();
-                if(arrayDecl()){
+                if(arrayDecl(t) != null){
                     t.setNElements(0);
                 }
                 else t.setNElements(-1);
@@ -102,7 +105,7 @@ public class SyntaxAnalyser {
                     if(consume(Token.codeOf("COMMA"))){
                         if(consume(Token.codeOf("ID"))){
                             tkName = consumed.getContent();
-                            if(arrayDecl()){
+                            if(arrayDecl(t) != null){
                                 t.setNElements(0);
                             }
                             else t.setNElements(-1);
@@ -129,33 +132,61 @@ public class SyntaxAnalyser {
         return false;
     }
 
-    private boolean arrayDecl() {
+    private SymType arrayDecl(SymType ret) {
         System.out.println("arrayDecl " + tokensToAnalyse.get(crtTkIndex));
+        // SymType ret;
         int init = crtTkIndex;
         if(consume(Token.codeOf("LBRACKET"))){
-            if(expr()){
+            RetVal rv = expr();
+            if(rv != null){
+                if(!rv.isCtVal()){
+                    tkErr(crtTkIndex, "the array size is not a constant");
+                }
 
+                if(!rv.getType().getTypebase().equals("TB_INT")){
+                    tkErr(crtTkIndex, "the array size is not an integer");
+                }
+
+                ret.setNElements((int)rv.getCtVal().getI());
+            }
+            else {
+                ret.setNElements(0);
             }
             if(consume(Token.codeOf("RBRACKET")))
-                return true;
+                return ret;
             else tkErr(crtTkIndex, "Missing RBRACKET");
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean expr() {
+    private RetVal expr() {
         System.out.println("expr " + tokensToAnalyse.get(crtTkIndex));
         return exprAssign();
     }
 
-    private boolean exprAssign() {
+    private RetVal exprAssign() { // returns RetVal ret
         System.out.println("exprAssign " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprUnary()){
+        RetVal rv = exprUnary();
+
+        if(rv != null){
             if(consume(Token.codeOf("ASSIGN"))){
-                if(exprAssign())
-                    return true;
+                RetVal rve = exprAssign();
+                if(rve != null) {
+                    if(!rv.isLVal()){
+                        tkErr(crtTkIndex, "cannot assign to a non-lval");
+                    }
+                    if(rv.getType().getNElements() > -1 ||
+                            rve.getType().getNElements() > -1){
+                        tkErr(crtTkIndex, "the arrays cannot be assigned");
+                    }
+
+                    rv.getType().castTo(rve.getType());
+//                     rv.setLVal(false);
+//                     rv.setCtVal(false);
+                    return rv;
+                }
             }
         }
 
@@ -163,159 +194,219 @@ public class SyntaxAnalyser {
         return exprOr();
     }
 
-    private boolean exprOr() {
+    private RetVal exprOr() {
         System.out.println("exprOr " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprAnd()){
-            return exprOr1();
+        RetVal rv = exprAnd();
+        if(rv != null){
+            return exprOr1(rv);
 
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprOr1() {
+    private RetVal exprOr1(RetVal rv) {
         System.out.println("exprOr1 " + tokensToAnalyse.get(crtTkIndex));
         if(consume(Token.codeOf("OR"))){
-            if(exprAnd()){
-                if(exprOr1()){}
+            RetVal rve = exprAnd();
+            if(rve != null){
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be logically tested");
+                }
+                rv.setType(new SymType("TB_INT", -1));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+                if(exprOr1(rv) != null){}
             }else{
                 tkErr(crtTkIndex, "Missing OR element");
             }
         }
-        return true;
+        return rv;
     }
 
-    private boolean exprAnd(){
+    private RetVal exprAnd(){
         System.out.println("exprAnd " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprEq()){
-            return exprAnd1();
+        RetVal rv = exprEq();
+        if(rv != null){
+            return exprAnd1(rv);
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprAnd1() {
+    private RetVal exprAnd1(RetVal rv) {
         System.out.println("exprAnd1 " + tokensToAnalyse.get(crtTkIndex));
         if(consume(Token.codeOf("AND"))){
-            if(exprEq()){
-                if(exprAnd1()){}
+            RetVal rve = exprEq();
+            if(rve != null){
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be logically tested");
+                }
+                rv.setType(new SymType("TB_INT", -1));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+            if(exprAnd1(rv) != null){}
+
             }
             else {
                 tkErr(crtTkIndex, "Missing AND element");
-                return false;
+                return null;
             }
         }
 
-        return true;
+        return rv;
     }
 
-    private boolean exprEq() {
+    private RetVal exprEq() {
         System.out.println("exprEq " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprRel()){
-            return exprEq1();
+        RetVal rv = exprRel();
+        if(rv != null){
+            return exprEq1(rv);
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprEq1() {
+    private RetVal exprEq1(RetVal rv) {
         System.out.println("exprEq1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("EQUAL")) || consume(Token.codeOf("NOTEQ"))){
-            if(exprRel()){
-                if(exprEq1()){
-                    return true;
+            RetVal rve = exprRel();
+            if(rve != null){
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be compared");
+                }
+                rv.setType(new SymType("TB_INT", -1));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+                if(exprEq1(rv) != null){
+
                 }
             }
             else {
                 tkErr(crtTkIndex, "Missing relation");
-                return false;
+                return null;
             }
         }
         // crtTkIndex = init;
-        return true;
+        return rv;
     }
 
-    private boolean exprRel() {
+    private RetVal exprRel() {
         System.out.println("exprRel " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprAdd()){
-            return exprRel1();
+        RetVal rv = exprAdd();
+        if(rv != null){
+            return exprRel1(rv);
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprRel1() {
+    private RetVal exprRel1(RetVal rv) {
         System.out.println("exprRel1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("LESS")) || consume(Token.codeOf("LESSEQ")) ||
                 consume(Token.codeOf("GREATER")) || consume(Token.codeOf("GREATEREQ"))){
-            if(exprAdd()){
-                if(exprRel1()){
+            RetVal rve = exprAdd();
+            if(rve != null){
+                if(rv.getType().getNElements() > -1 || rve.getType().getNElements() > -1)
+                    tkErr(crtTkIndex, "an array cannot be compared");
+
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be compared");
+                }
+                rv.setType(new SymType("TB_INT", -1));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+                if(exprRel1(rv) != null){
 
                 }
             }else{
                 tkErr(crtTkIndex, "Missing relation");
-                return false;
+                return null;
             }
         }
         //crtTkIndex = init;
 
-        return true;
+        return rv;
     }
 
-    private boolean exprAdd() {
+    private RetVal exprAdd() {
         System.out.println("exprAdd " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-
-        if(exprMul()){
-            return exprAdd1();
+        RetVal rv = exprMul();
+        if(rv != null){
+            return exprAdd1(rv);
         }
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprMul() {
+    private RetVal exprMul() {
         System.out.println("exprMul " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        if(exprCast()){
-            return exprMul1();
+        RetVal rv = exprCast();
+        if(rv != null){
+            return exprMul1(rv);
         }
 
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprMul1() {
+    private RetVal exprMul1(RetVal rv) {
         System.out.println("exprMul1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
         if(consume(Token.codeOf("MUL")) || consume(Token.codeOf("DIV"))){
-            if(exprCast()){
-                if(exprMul1()){
-                    return true;
+            RetVal rve = exprCast();
+            if(rve != null){
+                if(rv.getType().getNElements() > -1 || rve.getType().getNElements() > -1)
+                    tkErr(crtTkIndex, "an array cannot be multiplied or divided");
+
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be multiplied or divided");
+                }
+                rv.setType(getArithType(rv.getType(), rve.getType()));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+                if(exprMul1(rv) != null){
+
                 }
             }else{
                 tkErr(crtTkIndex, "Missing cast expr");
-                return false;
+                return null;
             }
         }
 
-        return true;
+        return rv;
     }
 
-    private boolean exprCast() {
+    private RetVal exprCast() {
         System.out.println("exprCast " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(consume(Token.codeOf("LPAR"))){
-            if(typeName() != null){
+            SymType t = typeName();
+            if(t != null){
                 if(consume(Token.codeOf("RPAR"))){
-                    if(exprCast()){
-                        return true;
+                    RetVal rve = exprCast();
+                    if(rve != null){
+                        t.castTo(rve.getType());
+                        return new RetVal(t, false, false);
                     }
                 }
                 else{
@@ -327,12 +418,13 @@ public class SyntaxAnalyser {
             }
         }
         else{
-            if(exprUnary())
-                return true;
+            RetVal rv = exprUnary();
+            if(rv != null)
+                return rv;
         }
 
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
     private SymType typeName() {
@@ -340,7 +432,7 @@ public class SyntaxAnalyser {
         int init = crtTkIndex;
         SymType t;
         if((t = typeBase()) != null){
-            if(arrayDecl()){
+            if(arrayDecl(t) != null){
                 return t;
             }
             else {
@@ -354,60 +446,117 @@ public class SyntaxAnalyser {
         return null;
     }
 
-    private boolean exprAdd1() {
+    private RetVal exprAdd1(RetVal rv) {
         System.out.println("exprAdd1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
 
         if(consume(Token.codeOf("ADD")) || consume(Token.codeOf("SUB"))){
-            if(exprMul()){
-                if(exprAdd1()){
-                    return true;
+            RetVal rve = exprMul();
+            if(rve != null){
+                if(rv.getType().getNElements() > -1 || rve.getType().getNElements() > -1)
+                    tkErr(crtTkIndex, "an array cannot be added or subtracted");
+
+                if(rv.getType().getTypebase().equals("TB_STRUCT") ||
+                        rve.getType().getTypebase().equals("TB_STRUCT")){
+                    tkErr(crtTkIndex, "a structure cannot be added or subtracted");
+                }
+                rv.setType(getArithType(rv.getType(), rve.getType()));
+//                rv.setCtVal(false);
+//                rv.setLVal(false);
+
+                if(exprAdd1(rv) != null){
+
                 }
             }
             else{
                 tkErr(crtTkIndex, "Missing mul expression");
-                return false;
+                return null;
             }
         }
-        return true;
+        return rv;
     }
 
 
-    private boolean exprUnary() {
+    private RetVal exprUnary() {
         System.out.println("exprUnary " + tokensToAnalyse.get(crtTkIndex));
+        RetVal rv;
         if(consume(Token.codeOf("SUB")) || consume(Token.codeOf("NOT"))){
-            return exprUnary();
+            int tkop = consumed.getCode();
+            rv = exprUnary();
+            if(rv != null){
+                if(tkop == Token.tokens.indexOf("SUB")){
+                    if(rv.getType().getNElements() >= 0)
+                        tkErr(crtTkIndex, "unary '-' cannot be applied to array");
+                    if(rv.getType().getTypebase().equals("TB_STRUCT"))
+                        tkErr(crtTkIndex, "unary '-' cannot be applied to a struct");
+
+                } else {
+                    if(rv.getType().getTypebase().equals("TB_STRUCT"))
+                        tkErr(crtTkIndex, "'!' cannot be applied to structures");
+
+                    rv.setType(new SymType("TB_INT", -1));
+                }
+
+//                rv.setLVal(false);
+//                rv.setCtVal(false);
+
+            }
         }
         else return exprPostfix();
+
+        return rv;
     }
 
-    private boolean exprPostfix() {
+    private RetVal exprPostfix() {
         System.out.println("exprPostfix " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-
-        if(exprPrimary()){
-            return exprPostfix1();
+        RetVal rv = exprPrimary();
+        if(rv != null){
+            return exprPostfix1(rv);
         }
 
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprPrimary() {
+    private RetVal exprPrimary() {
         System.out.println("exprPrimary " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
 
         if(consume(Token.codeOf("ID"))){
+            String tkName = consumed.getContent();
+            findSymbol(symbols, tkName);
+            if(foundSymbol == null){
+                tkErr(crtTkIndex, "undefined symbol: " + tkName);
+            }
+            RetVal rv = new RetVal(foundSymbol.getType(), true, false);
             if(consume(Token.codeOf("LPAR"))){
-                if(expr()){
+                ListIterator<Symbol> crtDefArg = foundSymbol.getArgs().listIterator();
+                if(!foundSymbol.getCls().equals("CLS_FUNC") && !foundSymbol.getCls().equals("CLS_EXTFUNC")){
+                    tkErr(crtTkIndex, "call of the non-function: " + tkName);
+                }
+                RetVal arg = expr();
+                if(arg != null){
+                    if(!crtDefArg.hasNext()){
+                        tkErr(crtTkIndex, "too many arguments in call");
+                    }
+
+                    crtDefArg.next().getType().castTo(arg.getType());
+
+
                     while(true){
                         if(consume(Token.codeOf("COMMA"))){
-                            if(expr()){
+                            arg = expr();
+                            if(arg != null){
+                                if(!crtDefArg.hasNext()){
+                                    tkErr(crtTkIndex, "too many arguments in call");
+                                }
 
+                                foundSymbol.getType().castTo(arg.getType());
+                                crtDefArg.next();
                             }
                             else{
                                 tkErr(crtTkIndex, "Missing expression after COMMA");
-                                return false;
                             }
 
                         }
@@ -417,79 +566,126 @@ public class SyntaxAnalyser {
                     }
                 }
                 if(consume(Token.codeOf("RPAR"))){
+                    if(crtDefArg.hasNext())
+                        tkErr(crtTkIndex, "too few arguments in call");
+
+                    rv.setType(foundSymbol.getType());
+//                    rv.setCtVal(false);
+//                    rv.setLVal(false);
 
                 }
                 else{
                     tkErr(crtTkIndex, "Missing RPAR");
-                    crtTkIndex = init;
-                    return false;
+                }
+            }
+            else {
+                if(foundSymbol.getCls().equals("CLS_FUNC") || foundSymbol.getCls().equals("CLS_EXTFUNC")){
+                    tkErr(crtTkIndex, "missing call for function " + tkName);
                 }
             }
 
-
-
-            return true;
+            return rv;
         }
         else if(consume(Token.codeOf("CT_INT")))
-            return true;
+            return new RetVal(new SymType("TB_INT", -1),
+                    new CtVal(Long.parseLong(consumed.getContent())),
+                    false,
+                    true
+            );
 
         else if(consume(Token.codeOf("CT_REAL")))
-            return true;
+            return new RetVal(
+                    new SymType("TB_DOUBLE", -1),
+                    new CtVal(Double.parseDouble(consumed.getContent())),
+                    false,
+                    true
+            );
 
         else if(consume(Token.codeOf("CT_CHAR")))
-            return true;
+            return new RetVal(
+                    new SymType("TB_CHAR", -1),
+                    new CtVal(consumed.getContent()),
+                    false,
+                    true
+            );
 
         else if(consume(Token.codeOf("CT_STRING")))
-            return true;
+            return new RetVal(
+                    new SymType("TB_CHAR", 0),
+                    new CtVal(consumed.getContent()),
+                    false,
+                    true
+            );
 
         else if(consume(Token.codeOf("LPAR"))){
-            if(expr()){
+            RetVal rv = expr();
+            if(rv != null){
                 if(consume(Token.codeOf("RPAR")))
-                    return true;
+                    return rv;
             }
         }
 
         crtTkIndex = init;
-        return false;
+        return null;
     }
 
-    private boolean exprPostfix1() {
+    private RetVal exprPostfix1(RetVal rv) {
         System.out.println("exprPostfix1 " + tokensToAnalyse.get(crtTkIndex));
         //int init = crtTkIndex;
 
         if(consume(Token.codeOf("LBRACKET"))){
-            if(expr()){
+            RetVal rve = expr();
+            if(rve != null){
+                if(rv.getType().getNElements() < 0)
+                    tkErr(crtTkIndex, "only an array can be indexed");
+
+                SymType typeInt = new SymType("TB_INT", -1);
+                typeInt.castTo(rve.getType());
+
+                // rv.getType().setNElements(-1);
+//                rv.setCtVal(false);
+//                rv.setLVal(true);
+
                 if(consume(Token.codeOf("RBRACKET"))){
-                    if(exprPostfix1()){
-                        return true;
+                    if(exprPostfix1(rv) != null){
+                        return rv;
                     }
                 }
                 else{
                     tkErr(crtTkIndex, "Missing RBRACKET");
-                    return false;
                 }
             }
             else{
                 tkErr(crtTkIndex, "Missing expression after LBRACKET");
-                return false;
             }
         }
         else{
             if(consume(Token.codeOf("DOT"))){
                 if(consume(Token.codeOf("ID"))){
-                    if(exprPostfix1()){
-                        return true;
+                    String tkName = consumed.getContent();
+                    Symbol sStruct = rv.getType().getS();
+                    findSymbol(sStruct.getMembers(), tkName);
+                    if(foundSymbol == null){
+                        tkErr(crtTkIndex, "struct " + sStruct.getName() + " does not have a member " + tkName);
+                    }
+
+                    rv.setType(foundSymbol.getType());
+//                    rv.setLVal(true);
+//                    rv.setCtVal(false);
+
+                    if(exprPostfix1(rv) != null){
+                        return rv;
                     }
                 }
                 else{
                     tkErr(crtTkIndex, "Missing ID after DOT");
-                    return false;
+                    return null;
                 }
             }
         }
 
         //crtTkIndex = init;
-        return true;
+        return rv;
     }
 
 
@@ -530,8 +726,8 @@ public class SyntaxAnalyser {
     private boolean declFunc() {
         System.out.println("declFunc " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        SymType t;
-        if((t = typeBase()) != null){
+        SymType t = typeBase();
+        if(t != null){
             if(consume(Token.codeOf("MUL"))){
                 t.setNElements(0);
             } else {
@@ -628,11 +824,17 @@ public class SyntaxAnalyser {
     private boolean stm() {
         System.out.println("stm " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
+        RetVal rv;
         if(stmCompound())
             return true;
         else if(consume(Token.codeOf("IF"))){
             if(consume(Token.codeOf("LPAR"))){
-                if(expr()){
+                rv = expr();
+                if(rv!= null){
+                    if(rv.getType().getTypebase().equals("TB_STRUCT")){
+                        tkErr(crtTkIndex, "a structure cannot be logically tested");
+                    }
+
                     if(consume(Token.codeOf("RPAR"))){
                         if(stm()){
                             if(consume(Token.codeOf("ELSE"))){
@@ -663,7 +865,12 @@ public class SyntaxAnalyser {
         }
         else if(consume(Token.codeOf("WHILE"))){
             if(consume(Token.codeOf("LPAR"))){
-                if(expr()){
+                rv = expr();
+                if(rv != null){
+                    if(rv.getType().getTypebase().equals("TB_STRUCT")){
+                        tkErr(crtTkIndex, "a structure cannot be logically tested");
+                    }
+
                     if(consume(Token.codeOf("RPAR"))){
                         if(stm()){
                             return true;
@@ -682,12 +889,20 @@ public class SyntaxAnalyser {
         }
         else if(consume(Token.codeOf("FOR"))){
             if(consume(Token.codeOf("LPAR"))){
-                if(expr()){ }
+                RetVal rv1 = expr();
+                if(rv1 != null){ }
 
                 if(consume(Token.codeOf("SEMICOLON"))){
-                    if(expr()){}
+                    RetVal rv2 = expr();
+                    if(rv2 != null){
+                        if(rv2.getType().getTypebase().equals("TB_STRUCT")){
+                            tkErr(crtTkIndex, "a structure cannot be logically tested");
+                        }
+                    }
+
                     if(consume(Token.codeOf("SEMICOLON"))){
-                        if(expr()){}
+                        expr();
+
                         if(consume(Token.codeOf("RPAR"))){
                             if(stm())
                                 return true;
@@ -716,8 +931,14 @@ public class SyntaxAnalyser {
             }
         }
         else if(consume(Token.codeOf("RETURN"))){
-            if(expr())
-            {}
+            rv = expr();
+            if(rv != null){
+                if(crtFunc.getType().getTypebase().equals("TB_VOID")){
+                    tkErr(crtTkIndex, "a void function cannot return a value");
+                }
+            }
+
+            crtFunc.getType().castTo(rv.getType());
             if (consume(Token.codeOf("SEMICOLON"))){
                 return true;
             }
@@ -725,10 +946,17 @@ public class SyntaxAnalyser {
                 tkErr(crtTkIndex, "Missing \';\'");
             }
         }
-        else if(expr()){}
+        else {
+            rv = expr();
+            if (rv != null) {
+            }
 
-        if(consume(Token.codeOf("SEMICOLON")))
-            return true;
+
+            if (consume(Token.codeOf("SEMICOLON")))
+                return true;
+
+        }
+
         crtTkIndex = init;
 
         return false;
@@ -737,11 +965,11 @@ public class SyntaxAnalyser {
     private boolean funcArg() {
         System.out.println("funcArg " + tokensToAnalyse.get(crtTkIndex));
         int init = crtTkIndex;
-        SymType t;
-        if((t = typeBase()) != null){
+        SymType t = typeBase();
+        if(t != null){
             if(consume(Token.codeOf("ID"))){
                 String tkName = consumed.getContent();
-                if(arrayDecl()){
+                if(arrayDecl(t) != null){
 
                 }
                 else {
@@ -806,7 +1034,7 @@ public class SyntaxAnalyser {
     public boolean findSymbol(ArrayList<Symbol> symlist, String name) {
         Symbol s;
         if(symlist != null) {
-            for (int i = symlist.size() - 1; i > 0; i--) {
+            for (int i = symlist.size() - 1; i >= 0; i--) {
                 s = symlist.get(i);
                 if (s.getName().equals(name)) {
                     foundSymbol = s;
@@ -828,14 +1056,6 @@ public class SyntaxAnalyser {
         }
         return false;
     }
-
-  //  public void deleteSymbolsAfter()
-
-   /* public Symbol addSymbol(ArrayList<Symbol> symList, String name, String cls){
-        Symbol s = new Symbol(name, cls, crtDepth);
-        symList.add(s);
-        return s;
-    }*/
 
     public void addVar(String tkName, SymType t){
         if(crtStruct != null){
@@ -861,7 +1081,39 @@ public class SyntaxAnalyser {
         }
     }
 
-    public void deleteSymbolsAfter(ArrayList<Symbol> symlist, Symbol d){
+    public static SymType getArithType(SymType t1, SymType t2){
+        SymType ret = null;
+        String s1 = t1.getTypebase();
+        String s2 = t2.getTypebase();
+
+        if(typeMap.containsKey(s1)) {
+            int i1 = typeMap.get(t1.getTypebase());
+            if(typeMap.containsKey(s2)) {
+                int i2 = typeMap.get(t2.getTypebase());
+
+                if(i1 >= i2){
+                    ret = t1;
+
+                }
+                else{
+                    ret = t2;
+                }
+
+                ret.setNElements(-1);
+            }
+            else{
+                System.out.println("Unconvertable type: " + t2.getTypebase());
+                System.exit(-1);
+            }
+        }
+        else{
+
+            System.out.println("Unconvertable type: " + t1.getTypebase());
+            System.exit(-1);
+        }
+
+        return ret;
 
     }
+
 }

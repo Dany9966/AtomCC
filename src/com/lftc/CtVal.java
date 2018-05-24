@@ -22,4 +22,8 @@ public class CtVal {
         this.d = 0;
         this.str = str;
     }
+
+    public long getI() {
+        return this.i;
+    }
 }

@@ -115,4 +115,8 @@ public class Symbol {
     public ArrayList<Symbol> getArgs() {
         return args;
     }
+
+    public SymType getType() {
+        return this.type;
+    }
 }

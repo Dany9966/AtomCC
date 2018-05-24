@@ -61,9 +61,9 @@ public class SymType {
     }
 
     public void castTo(SymType type){
-        if(this.nElements > -1){
-            if(type.nElements > -1){
-                if(!(this.typebase.equals(type.typebase))){
+        if(this.nElements > -1) {
+            if (type.nElements > -1) {
+                if (!(this.typebase.equals(type.typebase))) {
                     System.out.println("an array cannot be converted to an array of another type");
                     System.exit(1);
                 } else {
@@ -71,35 +71,48 @@ public class SymType {
                     System.exit(1);
                 }
             } else {
-                if(type.nElements > -1){
+                if (type.nElements > -1) {
                     System.out.println("a non-array cannot be converted to an array");
                     System.exit(1);
                 }
             }
-
-            switch(this.typebase){
-                case "TB_CHAR":
-                case "TB_INT":
-                case "TB_DOUBLE":
-                    switch(type.typebase){
-                        case "TB_CHAR":
-                        case "TB_INT":
-                        case "TB_DOUBLE":
-                            return;
-
-                    }
-                case "TB_STRUCT":
-                    if(type.typebase.equals("TB_STRUCT")){
-                        if(this.s != type.s){
-                            System.out.println("a structure cannot be converted to another one");
-                            System.exit(1);
-                        }
-
-                        return;
-                    }
-            }
         }
+
+        switch(this.typebase){
+            case "TB_CHAR":
+            case "TB_INT":
+            case "TB_DOUBLE":
+                switch(type.typebase){
+                    case "TB_CHAR":
+                    case "TB_INT":
+                    case "TB_DOUBLE":
+                        return;
+
+                }
+            case "TB_STRUCT":
+                if(type.typebase.equals("TB_STRUCT")){
+                    if(this.s != type.s){
+                        System.out.println("a structure cannot be converted to another one");
+                        System.exit(1);
+                    }
+
+                    return;
+                }
+        }
+
         System.out.println("incompatible types");
         System.exit(1);
+    }
+
+    public String getTypebase() {
+        return this.typebase;
+    }
+
+    public int getNElements() {
+        return this.nElements;
+    }
+
+    public Symbol getS() {
+        return this.s;
     }
 }
